@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mineral & Electrolyte Navigator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .eng-blue { background-color: #1a3a6b; }
+        .eng-teal { background-color: #00c49a; }
+        .eng-orange { background-color: #ff8042; }
+        .eng-gray { background-color: #f0f2f5; }
+
+        .calculator-card {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .result-card {
+             background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease;
+        }
+
+        .result-card.visible {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .result-card a {
+            color: #2563eb;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+        .result-card a:hover {
+            color: #1d4ed8;
+        }
+
+
+        .btn-primary {
+            background-color: #1a3a6b;
+            color: white;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #2a528a;
+            transform: translateY(-2px);
+        }
+
+        /* Character styles */
+        #health-character-face .eye {
+            transition: all 0.3s ease;
+        }
+        #health-character-face .mouth {
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            transform-origin: center;
+        }
+        .blinking {
+            animation: blink 3s infinite;
+        }
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+        
+        /* Health Bar */
+        .progress-bar-container {
+            height: 20px;
+            background-color: #e0e7ff;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            transition: width 0.8s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Calculator Card -->
+        <div class="calculator-card p-8 space-y-6">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-800">Mineral & Electrolyte Navigator</h1>
+                <p class="text-gray-500 mt-2">Enter your details to assess your mineral levels.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="age" class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                    <input type="number" id="age" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="e.g., 55">
+                </div>
+                <div>
+                    <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                    <select id="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="mineral" class="block text-sm font-medium text-gray-700 mb-1">Mineral / Electrolyte</label>
+                    <select id="mineral" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"></select>
+                </div>
+                <div>
+                    <label for="blood-level" class="block text-sm font-medium text-gray-700 mb-1">Blood Level (<span id="unit"></span>)</label>
+                    <input type="number" id="blood-level" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Enter value">
+                </div>
+            </div>
+
+            <button id="calculate-btn" class="w-full btn-primary font-bold py-3 px-4 rounded-lg shadow-lg">
+                Assess My Levels
+            </button>
+        </div>
+
+        <!-- Results and Character Card -->
+        <div id="result-container" class="result-card p-8 flex flex-col items-center justify-center text-center space-y-4">
+             <!-- Character -->
+            <div id="character-container" class="w-48 h-48">
+                 <svg id="health-character" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="grad-body" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                            <stop offset="0%" style="stop-color:#80d0c7;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#1a3a6b;stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="45" fill="url(#grad-body)"/>
+                    <g id="health-character-face" transform="translate(0, 5)">
+                        <!-- Eyes -->
+                        <circle class="eye blinking" cx="35" cy="40" r="5" fill="white"/>
+                        <circle cx="36" cy="41" r="2" fill="black"/>
+                        <circle class="eye blinking" cx="65" cy="40" r="5" fill="white"/>
+                        <circle cx="66" cy="41" r="2" fill="black"/>
+                        <!-- Mouth -->
+                        <path class="mouth" id="mouth-neutral" d="M 40 65 Q 50 70 60 65" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <path class="mouth" id="mouth-happy" d="M 40 65 Q 50 80 60 65" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" style="display:none;"/>
+                        <path class="mouth" id="mouth-sad" d="M 40 70 Q 50 60 60 70" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" style="display:none;"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div id="result-content" class="w-full">
+                <h2 id="result-title" class="text-2xl font-bold text-gray-800">Your Results Will Appear Here</h2>
+                <p id="result-message" class="text-gray-600 mt-2">Let's check your mineral levels!</p>
+                
+                <div id="details-section" class="mt-6 text-left space-y-4" style="display: none;">
+                    <div>
+                        <h3 class="font-semibold text-gray-700"><a href="https://www.mayocliniclabs.com/interpretive-guide" target="_blank" class="hover:opacity-80">Your Level vs. Normal Range</a></h3>
+                        <div class="progress-bar-container mt-2">
+                            <div id="normal-range-bar" class="absolute h-full bg-green-200" style="left: 0%; width: 0%;"></div>
+                            <div id="your-level-indicator" class="absolute top-0 bottom-0 w-1 bg-indigo-600 rounded-full" style="left: 0%;"></div>
+                        </div>
+                         <div class="relative mt-1 text-xs text-gray-500">
+                            <span id="low-range-label" class="absolute" style="left:0%"></span>
+                            <span id="high-range-label" class="absolute" style="right:0%"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <h3 class="font-semibold text-gray-700">Key Function</h3>
+                            <p id="key-function" class="text-gray-600"></p>
+                        </div>
+
+                        <div>
+                            <h3 class="font-semibold text-gray-700">Potential Imbalance Effects</h3>
+                            <p id="imbalance-effects" class="text-gray-600"></p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-700">Management & Treatments</h3>
+                            <p id="treatments" class="text-gray-600"></p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-700">Relevant Companies</h3>
+                            <div id="companies" class="text-gray-600 text-sm"></div>
+                        </div>
+                    </div>
+
+                    <!-- ** NEW: Herbal Suggestion Section ** -->
+                    <div id="herbal-suggestion" class="p-4 bg-teal-50 border-l-4 border-teal-400 rounded-r-lg mt-4" style="display: none;">
+                        <div class="flex">
+                            <div class="py-1"><svg class="w-6 h-6 text-teal-500 mr-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg></div>
+                            <div>
+                                <h4 class="font-bold text-teal-800">Herbal Connection</h4>
+                                <p id="herbal-text" class="text-teal-700 text-sm mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             const mineralData = {
+                'Na': { name: 'Sodium', func: 'Maintains fluid balance, nerve transmission, muscle function.', imbalance: '<b>Low:</b> <a href="https://en.wikipedia.org/wiki/Hyponatremia" target="_blank">Hyponatremia</a>. <b>High:</b> <a href="https://en.wikipedia.org/wiki/Hypernatremia" target="_blank">Hypernatremia</a>. Critical in renal and heart health.', treatments: 'IV fluids (saline), diuretics, fluid restriction.', companies: '<a href="https://www.baxter.com/" target="_blank">Baxter</a>, <a href="https://www.fresenius-kabi.com/" target="_blank">Fresenius Kabi</a>', unit: 'mEq/L', ranges: { normal: [135, 145] }, herbalLink: `Fluid balance is key. Some diuretic herbs like <a href="https://fmbanafa-debug.github.io/Herbal/#dandelion" target="_blank">Dandelion</a> are traditionally used, but require caution. Consult the Herbal Guide for more.` },
+                'K': { name: 'Potassium', func: 'Crucial for heart function, muscle contractions, and nerve signals.', imbalance: '<b>Low:</b> <a href="https://en.wikipedia.org/wiki/Hypokalemia" target="_blank">Hypokalemia</a>. <b>High:</b> <a href="https://en.wikipedia.org/wiki/Hyperkalemia" target="_blank">Hyperkalemia</a>. Very important for renal patients.', treatments: 'Potassium supplements (oral/IV), dietary changes, potassium binders.', companies: '<a href="https://www.pfizer.com/" target="_blank">Pfizer</a>, <a href="https://www.viforpharma.com/" target="_blank">Vifor Pharma</a> (Veltassa)', unit: 'mEq/L', ranges: { normal: [3.5, 5.2] }, herbalLink: `For cardiovascular support, some traditions use herbs like <a href="https://fmbanafa-debug.github.io/Herbal/#hawthorn" target="_blank">Hawthorn</a>. Explore the Herbal Guide to learn more.` },
+                'Cl': { name: 'Chloride', func: 'Maintains fluid balance, blood volume, blood pressure, and body fluid pH.', imbalance: 'Often mirrors sodium levels. <b>Low:</b> Hypochloremia. <b>High:</b> Hyperchloremia.', treatments: 'Addressing the underlying cause, often related to Sodium/Potassium imbalance.', companies: 'General diagnostic and IV solution providers.', unit: 'mEq/L', ranges: { normal: [96, 106] }, herbalLink: `For general wellness, you can explore the <a href="https://fmbanafa-debug.github.io/Herbal/" target="_blank">Herbal Guide</a> for herbs that support overall health.` },
+                'Ca': { name: 'Calcium', func: 'Essential for bone health, muscle function, and blood clotting.', imbalance: '<b>Low:</b> <a href="https://en.wikipedia.org/wiki/Hypocalcaemia" target="_blank">Hypocalcemia</a>. <b>High:</b> <a href="https://en.wikipedia.org/wiki/Hypercalcaemia" target="_blank">Hypercalcemia</a>. Monitored in pregnancy and renal disease.', treatments: 'Calcium/Vitamin D supplements, bisphosphonates.', companies: '<a href="https://www.amgen.com/" target="_blank">Amgen</a>, <a href="https://www.takeda.com/" target="_blank">Takeda</a>', unit: 'mg/dL', ranges: { normal: [8.6, 10.3] }, herbalLink: `For bone health, herbs rich in minerals like <a href="https://fmbanafa-debug.github.io/Herbal/#nettle" target="_blank">Nettle</a> and Horsetail are sometimes used. Explore the Herbal Guide.` },
+                'Mg': { name: 'Magnesium', func: 'Supports muscle/nerve function, blood sugar levels, and blood pressure.', imbalance: '<b>Low:</b> <a href="https://en.wikipedia.org/wiki/Hypomagnesemia" target="_blank">Hypomagnesemia</a>. <b>High:</b> <a href="https://en.wikipedia.org/wiki/Hypermagnesemia" target="_blank">Hypermagnesemia</a>. Important in pregnancy (pre-eclampsia).', treatments: 'Magnesium supplements (oral/IV), dietary adjustments.', companies: 'General supplement and pharmaceutical companies.', unit: 'mEq/L', ranges: { normal: [1.7, 2.2] }, herbalLink: `Muscle cramping can be a sign of low magnesium. For relaxation, some people use <a href="https://fmbanafa-debug.github.io/Herbal/#chamomile" target="_blank">Chamomile</a>. See the Herbal Guide for more.` },
+                'P': { name: 'Phosphorus', func: 'Key for bone formation, energy production, and cell repair.', imbalance: '<b>Low:</b> Hypophosphatemia. <b>High:</b> <a href="https://en.wikipedia.org/wiki/Hyperphosphatemia" target="_blank">Hyperphosphatemia</a>. Critical in chronic kidney disease.', treatments: 'Phosphate binders, dietary phosphorus restriction.', companies: '<a href="https://www.sanofi.com/" target="_blank">Sanofi</a> (Renvela), <a href="https://www.freseniusmedicalcare.com/" target="_blank">Fresenius Medical Care</a>', unit: 'mg/dL', ranges: { normal: [2.5, 4.5] }, herbalLink: `For general wellness, you can explore the <a href="https://fmbanafa-debug.github.io/Herbal/" target="_blank">Herbal Guide</a> for herbs that support overall health.` },
+                'Fe': { name: 'Iron', func: 'Essential for making hemoglobin, which carries oxygen in the blood.', imbalance: '<b>Low:</b> <a href="https://en.wikipedia.org/wiki/Iron-deficiency_anemia" target="_blank">Iron-deficiency anemia</a>. <b>High:</b> <a href="https://en.wikipedia.org/wiki/Iron_overload" target="_blank">Hemochromatosis</a>. Crucial during pregnancy.', treatments: 'Iron supplements (oral/IV), dietary changes, chelation therapy.', companies: '<a href="https://www.viforpharma.com/" target="_blank">Vifor Pharma</a> (Ferinject), <a href="https://www.daiichisankyo.com/" target="_blank">Daiichi Sankyo</a>', unit: 'mcg/dL', ranges: { normal: [60, 170] }, herbalLink: `Fatigue from low iron is common. Some traditions use iron-rich herbs like <a href="https://fmbanafa-debug.github.io/Herbal/#nettle" target="_blank">Nettle</a> or energy boosters like <a href="https://fmbanafa-debug.github.io/Herbal/#ginseng" target="_blank">Ginseng</a>. Explore the Herbal Guide.` },
+             };
+
+            const mineralSelect = document.getElementById('mineral');
+            const unitSpan = document.getElementById('unit');
+            const calculateBtn = document.getElementById('calculate-btn');
+            const resultContainer = document.getElementById('result-container');
+            const resultTitle = document.getElementById('result-title');
+            const resultMessage = document.getElementById('result-message');
+            const detailsSection = document.getElementById('details-section');
+
+            Object.keys(mineralData).forEach(key => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `${mineralData[key].name} (${key})`;
+                mineralSelect.appendChild(option);
+            });
+
+            const updateUnits = () => {
+                unitSpan.textContent = mineralData[mineralSelect.value].unit;
+            };
+            mineralSelect.addEventListener('change', updateUnits);
+            updateUnits();
+
+            const setCharacterExpression = (expression) => {
+                document.querySelectorAll('#health-character-face .mouth').forEach(m => m.style.display = 'none');
+                const eyes = document.querySelectorAll('#health-character-face .eye');
+                
+                if (expression === 'happy') {
+                    document.getElementById('mouth-happy').style.display = 'block';
+                    eyes.forEach(eye => eye.setAttribute('cy', '38'));
+                } else if (expression === 'sad') {
+                    document.getElementById('mouth-sad').style.display = 'block';
+                    eyes.forEach(eye => eye.setAttribute('cy', '42'));
+                } else {
+                    document.getElementById('mouth-neutral').style.display = 'block';
+                    eyes.forEach(eye => eye.setAttribute('cy', '40'));
+                }
+            };
+            
+            calculateBtn.addEventListener('click', () => {
+                const mineralKey = mineralSelect.value;
+                const bloodLevel = parseFloat(document.getElementById('blood-level').value);
+
+                if (isNaN(bloodLevel)) {
+                    resultTitle.textContent = 'Invalid Input';
+                    resultMessage.textContent = 'Please enter a valid blood level.';
+                    setCharacterExpression('sad');
+                    detailsSection.style.display = 'none';
+                    resultContainer.classList.add('visible');
+                    return;
+                }
+
+                const mineral = mineralData[mineralKey];
+                const [normalMin, normalMax] = mineral.ranges.normal;
+                let status = '';
+                let statusColor = '';
+                
+                if (bloodLevel < normalMin) {
+                    status = 'Low';
+                    statusColor = 'text-orange-500';
+                    setCharacterExpression('sad');
+                } else if (bloodLevel > normalMax) {
+                    status = 'High';
+                    statusColor = 'text-red-500';
+                    setCharacterExpression('sad');
+                } else {
+                    status = 'Normal';
+                    statusColor = 'text-green-500';
+                    setCharacterExpression('happy');
+                }
+
+                resultTitle.textContent = `Your ${mineral.name} level is ${status}`;
+                resultTitle.className = `text-2xl font-bold ${statusColor}`;
+                resultMessage.textContent = `Based on your input, your blood level is ${bloodLevel} ${mineral.unit}.`;
+                
+                document.getElementById('key-function').innerHTML = mineral.func;
+                document.getElementById('imbalance-effects').innerHTML = mineral.imbalance;
+                document.getElementById('treatments').innerHTML = mineral.treatments;
+                document.getElementById('companies').innerHTML = mineral.companies;
+
+                const fullRange = normalMax * 1.5;
+                const yourLevelPercent = (bloodLevel / fullRange) * 100;
+                const normalMinPercent = (normalMin / fullRange) * 100;
+                const normalMaxPercent = (normalMax / fullRange) * 100;
+                
+                document.getElementById('your-level-indicator').style.left = `${Math.min(yourLevelPercent, 100)}%`;
+                
+                const normalRangeBar = document.getElementById('normal-range-bar');
+                normalRangeBar.style.left = `${normalMinPercent}%`;
+                normalRangeBar.style.width = `${normalMaxPercent - normalMinPercent}%`;
+
+                document.getElementById('low-range-label').textContent = `${normalMin} ${mineral.unit}`;
+                document.getElementById('low-range-label').style.left = `${normalMinPercent}%`;
+                document.getElementById('high-range-label').textContent = `${normalMax} ${mineral.unit}`;
+                document.getElementById('high-range-label').style.right = `${100 - normalMaxPercent}%`;
+
+                // ** NEW: Herbal Logic **
+                const herbalSuggestionDiv = document.getElementById('herbal-suggestion');
+                const herbalTextP = document.getElementById('herbal-text');
+                if ((status === 'Low' || status === 'High') && mineral.herbalLink) {
+                    herbalTextP.innerHTML = mineral.herbalLink;
+                    herbalSuggestionDiv.style.display = 'block';
+                } else {
+                    herbalSuggestionDiv.style.display = 'none';
+                }
+
+                detailsSection.style.display = 'block';
+                resultContainer.classList.add('visible');
+            });
+            
+            setCharacterExpression('neutral');
+        });
+    </script>
+</body>
+</html>
+
